@@ -336,7 +336,7 @@ public:
             note_in[ch] = -1;
             indicator_in[ch] = 0;
             if(ch > 3) {
-              OC::GateOutputs::Gateout(ch-4, 0);
+              GateOut(ch, 0);
             }
             if(ch < 4) {
               note_out[ch] = -1;
@@ -360,6 +360,8 @@ public:
             }
         }
     }
+
+    
 
     /* When the app is suspended, it sends out a system exclusive dump, generated here */
     void OnSendSysEx() {
@@ -738,7 +740,7 @@ private:
 
                         if (in_fn == MIDI_IN_GATE && !gate_captured && (ch > 3)) {
                             // Send a gate at Note On
-                            OC::GateOutputs::Gateout(ch-4, 1);
+                            GateOutput(ch, 1);
                             indicator = 1;
                             gate_captured = 1;
                             note_in[ch] = data1;
@@ -764,7 +766,7 @@ private:
                         note_in[ch] = -1;
                         if (in_fn == MIDI_IN_GATE && (ch > 3)) {
                             // Turn off gate on Note Off
-                            OC::GateOutputs::Gateout(ch-4,0);
+                            GateOutput(ch,0);
                             indicator = 1;
                         } else if (in_fn == MIDI_IN_NOTE && (ch < 4)) {
                             // Log Note Off on the note assignment

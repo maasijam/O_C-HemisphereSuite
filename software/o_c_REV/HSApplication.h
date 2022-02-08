@@ -55,6 +55,7 @@ public:
     virtual void View();
     virtual void Resume();
 
+
     void BaseController() {
         for (uint8_t ch = 0; ch < 10; ch++)
         {
@@ -68,7 +69,7 @@ public:
             }
             if (clock_countdown[ch] > 0) {
                 if(ch > 3) {
-                  if (--clock_countdown[ch] == 0) OC::GateOutputs::Gateout(ch-4, 0);
+                  if (--clock_countdown[ch] == 0) GateOutput(ch, 0);
                 }
             }
         }
@@ -107,12 +108,18 @@ public:
     //////////////// Hemisphere-like IO methods
     ////////////////////////////////////////////////////////////////////////////////
     void Out(int ch, int value, int octave = 0) {
-        OC::DAC::set_pitch((DAC_CHANNEL)ch, value, octave);
-        outputs[ch] = value + (octave * (12 << 7));
+        if(ch < 4) {
+          OC::DAC::set_pitch((DAC_CHANNEL)ch, value, octave);
+          outputs[ch] = value + (octave * (12 << 7));
+        }
     }
 
     int In(int ch) {
         return inputs[ch];
+    }
+
+    void GateOutput(int ch, bool high, int ch_offset = 4) {
+        OC::GateOutputs::Gateout(ch-ch_offset,(high ? 1 : 0));
     }
 
     // Apply small center detent to input, so it reads zero before a threshold
@@ -152,7 +159,9 @@ public:
 
     void ClockOut(int ch, int ticks = 100) {
         clock_countdown[ch] = ticks;
-        OC::GateOutputs::Gateout(ch-4, 1);
+        if(ch > 3) {
+          GateOutput(ch, 1);
+        }
     }
 
     // Buffered I/O functions for use in Views
