@@ -24,9 +24,10 @@
 
 #include "HSApplication.h"
 #include "HSMIDI.h"
+#include "OC_gate_outputs.h"
 
 #define MIDI_INDICATOR_COUNTDOWN 2000
-#define MIDI_PARAMETER_COUNT 40
+#define MIDI_PARAMETER_COUNT 84
 #define MIDI_CURRENT_SETUP (MIDI_PARAMETER_COUNT * 4)
 #define MIDI_SETTING_LAST (MIDI_CURRENT_SETUP + 1)
 #define MIDI_LOG_MAX_SIZE 101
@@ -36,18 +37,27 @@ const uint8_t MIDI_midi_icon[8] = {0x3c, 0x42, 0x91, 0x45, 0x45, 0x91, 0x42, 0x3
 const uint8_t MIDI_note_icon[8] = {0xc0, 0xe0, 0xe0, 0xe0, 0x7f, 0x02, 0x14, 0x08};
 const uint8_t MIDI_clock_icon[8] = {0x9c, 0xa2, 0xc1, 0xcf, 0xc9, 0xa2, 0x9c, 0x00};
 
-const char* const midi_in_functions[17] = {
-    "--", "Note", "Gate", "Trig", "Veloc", "Mod", "Aft", "Bend",  "Expr", "Pan", "Hold", "Brth", "yAxis", "Qtr", "8th", "16th", "24ppq"
+const char* const midi_in_functions[6] = {
+    "--", "Note", "Veloc", "Aft", "Bend", "CC"
+};
+const char* const midi_in_gate_functions[8] = {
+    "--", "Gate", "Trig", "Hold", "Qtr", "8th", "16th", "24ppq"
 };
 const char* const midi_out_functions[12] = {
     "--", "Note", "Leg.", "Veloc", "Mod", "Aft", "Bend", "Expr", "Pan", "Hold", "Brth", "yAxis"
 };
 
 #define MIDI_SETUP_PARAMETER_LIST \
-{ 0, 0, 16, "MIDI > A", midi_in_functions, settings::STORAGE_TYPE_U8 },\
-{ 0, 0, 16, "MIDI > B", midi_in_functions, settings::STORAGE_TYPE_U8 },\
-{ 0, 0, 16, "MIDI > C", midi_in_functions, settings::STORAGE_TYPE_U8 },\
-{ 0, 0, 16, "MIDI > D", midi_in_functions, settings::STORAGE_TYPE_U8 },\
+{ 0, 0, 5, "MIDI > A", midi_in_functions, settings::STORAGE_TYPE_U8 },\
+{ 0, 0, 5, "MIDI > B", midi_in_functions, settings::STORAGE_TYPE_U8 },\
+{ 0, 0, 5, "MIDI > C", midi_in_functions, settings::STORAGE_TYPE_U8 },\
+{ 0, 0, 5, "MIDI > D", midi_in_functions, settings::STORAGE_TYPE_U8 },\
+{ 0, 0, 7, "MIDI > G1", midi_in_gate_functions, settings::STORAGE_TYPE_U8 },\
+{ 0, 0, 7, "MIDI > G2", midi_in_gate_functions, settings::STORAGE_TYPE_U8 },\
+{ 0, 0, 7, "MIDI > G3", midi_in_gate_functions, settings::STORAGE_TYPE_U8 },\
+{ 0, 0, 7, "MIDI > G4", midi_in_gate_functions, settings::STORAGE_TYPE_U8 },\
+{ 0, 0, 7, "MIDI > G5", midi_in_gate_functions, settings::STORAGE_TYPE_U8 },\
+{ 0, 0, 7, "MIDI > G6", midi_in_gate_functions, settings::STORAGE_TYPE_U8 },\
 { 0, 0, 11, "1 > MIDI", midi_out_functions, settings::STORAGE_TYPE_U8 },\
 { 0, 0, 11, "2 > MIDI", midi_out_functions, settings::STORAGE_TYPE_U8 },\
 { 0, 0, 11, "3 > MIDI", midi_out_functions, settings::STORAGE_TYPE_U8 },\
@@ -56,6 +66,12 @@ const char* const midi_out_functions[12] = {
 { 0, 0, 16, "MIDI > B", midi_channels, settings::STORAGE_TYPE_U8 },\
 { 0, 0, 16, "MIDI > C", midi_channels, settings::STORAGE_TYPE_U8 },\
 { 0, 0, 16, "MIDI > D", midi_channels, settings::STORAGE_TYPE_U8 },\
+{ 0, 0, 16, "MIDI > G1", midi_channels, settings::STORAGE_TYPE_U8 },\
+{ 0, 0, 16, "MIDI > G2", midi_channels, settings::STORAGE_TYPE_U8 },\
+{ 0, 0, 16, "MIDI > G3", midi_channels, settings::STORAGE_TYPE_U8 },\
+{ 0, 0, 16, "MIDI > G4", midi_channels, settings::STORAGE_TYPE_U8 },\
+{ 0, 0, 16, "MIDI > G5", midi_channels, settings::STORAGE_TYPE_U8 },\
+{ 0, 0, 16, "MIDI > G6", midi_channels, settings::STORAGE_TYPE_U8 },\
 { 0, 0, 16, "1 > MIDI", midi_channels, settings::STORAGE_TYPE_U8 },\
 { 0, 0, 16, "2 > MIDI", midi_channels, settings::STORAGE_TYPE_U8 },\
 { 0, 0, 16, "3 > MIDI", midi_channels, settings::STORAGE_TYPE_U8 },\
@@ -64,6 +80,12 @@ const char* const midi_out_functions[12] = {
 { 0, -24, 24, "MIDI > B", NULL, settings::STORAGE_TYPE_I8 },\
 { 0, -24, 24, "MIDI > C", NULL, settings::STORAGE_TYPE_I8 },\
 { 0, -24, 24, "MIDI > D", NULL, settings::STORAGE_TYPE_I8 },\
+{ 0, -24, 24, "MIDI > G1", NULL, settings::STORAGE_TYPE_I8 },\
+{ 0, -24, 24, "MIDI > G2", NULL, settings::STORAGE_TYPE_I8 },\
+{ 0, -24, 24, "MIDI > G3", NULL, settings::STORAGE_TYPE_I8 },\
+{ 0, -24, 24, "MIDI > G4", NULL, settings::STORAGE_TYPE_I8 },\
+{ 0, -24, 24, "MIDI > G5", NULL, settings::STORAGE_TYPE_I8 },\
+{ 0, -24, 24, "MIDI > G6", NULL, settings::STORAGE_TYPE_I8 },\
 { 0, -24, 24, "1 > MIDI", NULL, settings::STORAGE_TYPE_I8 },\
 { 0, -24, 24, "2 > MIDI", NULL, settings::STORAGE_TYPE_I8 },\
 { 0, -24, 24, "3 > MIDI", NULL, settings::STORAGE_TYPE_I8 },\
@@ -72,6 +94,12 @@ const char* const midi_out_functions[12] = {
 { 0, 0, 127, "MIDI > B", midi_note_numbers, settings::STORAGE_TYPE_U8 },\
 { 0, 0, 127, "MIDI > C", midi_note_numbers, settings::STORAGE_TYPE_U8 },\
 { 0, 0, 127, "MIDI > D", midi_note_numbers, settings::STORAGE_TYPE_U8 },\
+{ 0, 0, 127, "MIDI > G1", midi_note_numbers, settings::STORAGE_TYPE_U8 },\
+{ 0, 0, 127, "MIDI > G2", midi_note_numbers, settings::STORAGE_TYPE_U8 },\
+{ 0, 0, 127, "MIDI > G3", midi_note_numbers, settings::STORAGE_TYPE_U8 },\
+{ 0, 0, 127, "MIDI > G4", midi_note_numbers, settings::STORAGE_TYPE_U8 },\
+{ 0, 0, 127, "MIDI > G5", midi_note_numbers, settings::STORAGE_TYPE_U8 },\
+{ 0, 0, 127, "MIDI > G6", midi_note_numbers, settings::STORAGE_TYPE_U8 },\
 { 0, 0, 127, "1 > MIDI", midi_note_numbers, settings::STORAGE_TYPE_U8 },\
 { 0, 0, 127, "2 > MIDI", midi_note_numbers, settings::STORAGE_TYPE_U8 },\
 { 0, 0, 127, "3 > MIDI", midi_note_numbers, settings::STORAGE_TYPE_U8 },\
@@ -80,25 +108,45 @@ const char* const midi_out_functions[12] = {
 { 0, 0, 127, "MIDI > B", midi_note_numbers, settings::STORAGE_TYPE_U8 },\
 { 0, 0, 127, "MIDI > C", midi_note_numbers, settings::STORAGE_TYPE_U8 },\
 { 0, 0, 127, "MIDI > D", midi_note_numbers, settings::STORAGE_TYPE_U8 },\
+{ 0, 0, 127, "MIDI > G1", midi_note_numbers, settings::STORAGE_TYPE_U8 },\
+{ 0, 0, 127, "MIDI > G2", midi_note_numbers, settings::STORAGE_TYPE_U8 },\
+{ 0, 0, 127, "MIDI > G3", midi_note_numbers, settings::STORAGE_TYPE_U8 },\
+{ 0, 0, 127, "MIDI > G4", midi_note_numbers, settings::STORAGE_TYPE_U8 },\
+{ 0, 0, 127, "MIDI > G5", midi_note_numbers, settings::STORAGE_TYPE_U8 },\
+{ 0, 0, 127, "MIDI > G6", midi_note_numbers, settings::STORAGE_TYPE_U8 },\
 { 127, 0, 127, "1 > MIDI", midi_note_numbers, settings::STORAGE_TYPE_U8 },\
 { 127, 0, 127, "2 > MIDI", midi_note_numbers, settings::STORAGE_TYPE_U8 },\
 { 127, 0, 127, "3 > MIDI", midi_note_numbers, settings::STORAGE_TYPE_U8 },\
-{ 127, 0, 127, "4 > MIDI", midi_note_numbers, settings::STORAGE_TYPE_U8 },
+{ 127, 0, 127, "4 > MIDI", midi_note_numbers, settings::STORAGE_TYPE_U8 },\
+{ 0, 0, 127, "MIDI >A CC Num", NULL, settings::STORAGE_TYPE_I8 },\
+{ 0, 0, 127, "MIDI >B CC Num", NULL, settings::STORAGE_TYPE_I8 },\
+{ 0, 0, 127, "MIDI >C CC Num", NULL, settings::STORAGE_TYPE_I8 },\
+{ 0, 0, 127, "MIDI >D CC Num", NULL, settings::STORAGE_TYPE_I8 },\
+{ 0, 0, 127, "MIDI > G1", NULL, settings::STORAGE_TYPE_I8 },\
+{ 0, 0, 127, "MIDI > G2", NULL, settings::STORAGE_TYPE_I8 },\
+{ 0, 0, 127, "MIDI > G3", NULL, settings::STORAGE_TYPE_I8 },\
+{ 0, 0, 127, "MIDI > G4", NULL, settings::STORAGE_TYPE_I8 },\
+{ 0, 0, 127, "MIDI > G5", NULL, settings::STORAGE_TYPE_I8 },\
+{ 0, 0, 127, "MIDI > G6", NULL, settings::STORAGE_TYPE_I8 },\
+{ 0, 0, 127, "1 > MIDI", NULL, settings::STORAGE_TYPE_I8 },\
+{ 0, 0, 127, "2 > MIDI", NULL, settings::STORAGE_TYPE_I8 },\
+{ 0, 0, 127, "3 > MIDI", NULL, settings::STORAGE_TYPE_I8 },\
+{ 0, 0, 127, "4 > MIDI", NULL, settings::STORAGE_TYPE_I8 },
 
 enum MIDI_IN_FUNCTION {
     MIDI_IN_OFF,
     MIDI_IN_NOTE,
-    MIDI_IN_GATE,
-    MIDI_IN_TRIGGER,
     MIDI_IN_VELOCITY,
-    MIDI_IN_MOD,
     MIDI_IN_AFTERTOUCH,
     MIDI_IN_PITCHBEND,
-    MIDI_IN_EXPRESSION,
-    MIDI_IN_PAN,
+    MIDI_IN_CC,
+};
+
+enum MIDI_IN_GATE_FUNCTION {
+    MIDI_IN_GATE_OFF,
+    MIDI_IN_GATE,
+    MIDI_IN_TRIGGER,
     MIDI_IN_HOLD,
-    MIDI_IN_BREATH,
-    MIDI_IN_Y_AXIS,
     MIDI_IN_CLOCK_4TH,
     MIDI_IN_CLOCK_8TH,
     MIDI_IN_CLOCK_16TH,
@@ -648,14 +696,18 @@ private:
 
             // A MIDI message has been received; go through each channel to see if it
             // needs to be routed to any of the CV outputs
-            for (int ch = 0; ch < 4; ch++)
+            for (int ch = 0; ch < 10; ch++)
             {
+                
                 int in_fn = get_in_assign(ch);
+                //if(ch > 3) {
+                //  in_fn = get_in_gate_assign(ch);
+                //}
                 int in_ch = get_in_channel(ch);
                 bool indicator = 0;
                 if (message == MIDI_MSG_NOTE_ON && in_ch == channel) {
                     if (note_in[ch] == -1) { // If this channel isn't already occupied with another note, handle Note On
-                        if (in_fn == MIDI_IN_NOTE && !note_captured) {
+                        if (in_fn == MIDI_IN_NOTE && !note_captured && (ch < 4)) {
                             // Send quantized pitch CV. Isolate transposition to quantizer so that it notes off aren't
                             // misinterpreted if transposition is changed during the note.
                             int note = data1 + get_in_transpose(ch);
@@ -663,28 +715,29 @@ private:
                             if (in_in_range(ch, note)) {
                                 Out(ch, MIDIQuantizer::CV(note));
                                 UpdateLog(1, ch, 0, in_ch, note, data2);
+                                
                                 indicator = 1;
                                 note_captured = 1;
                                 note_in[ch] = data1;
                             } else note_in[ch] = -1;
                         }
 
-                        if (in_fn == MIDI_IN_GATE && !gate_captured) {
+                        if (in_fn == MIDI_IN_GATE && !gate_captured && (ch > 3)) {
                             // Send a gate at Note On
-                            GateOut(ch, 1);
+                            OC::GateOutputs::Gateout(ch-4, 1);
                             indicator = 1;
                             gate_captured = 1;
                             note_in[ch] = data1;
                         }
 
-                        if (in_fn == MIDI_IN_TRIGGER) {
+                        if (in_fn == MIDI_IN_TRIGGER && (ch > 3)) {
                             // Send a trigger pulse to CV
                             ClockOut(ch);
                             indicator = 1;
                             gate_captured = 1;
                         }
 
-                        if (in_fn == MIDI_IN_VELOCITY) {
+                        if (in_fn == MIDI_IN_VELOCITY && (ch < 4)) {
                             // Send velocity data to CV
                             Out(ch, Proportion(data2, 127, HSAPPLICATION_5V));
                             indicator = 1;
@@ -695,53 +748,52 @@ private:
                 if (message == MIDI_MSG_NOTE_OFF && in_ch == channel) {
                     if (note_in[ch] == data1) { // If the note off matches the note on assingned to this output
                         note_in[ch] = -1;
-                        if (in_fn == MIDI_IN_GATE) {
+                        if (in_fn == MIDI_IN_GATE && (ch > 3)) {
                             // Turn off gate on Note Off
-                            GateOut(ch, 0);
+                            OC::GateOutputs::Gateout(ch-4,0);
                             indicator = 1;
-                        } else if (in_fn == MIDI_IN_NOTE) {
+                        } else if (in_fn == MIDI_IN_NOTE && (ch < 4)) {
                             // Log Note Off on the note assignment
                             UpdateLog(1, ch, 1, in_ch, data1, 0);
-                        } else if (in_fn == MIDI_IN_VELOCITY) {
+                        } else if (in_fn == MIDI_IN_VELOCITY && (ch < 4)) {
                             Out(ch, 0);
                         }
                     }
                 }
 
-                bool cc = (in_fn == MIDI_IN_MOD || in_fn >= MIDI_IN_EXPRESSION);
+                bool cc = (in_fn == MIDI_IN_CC);
                 if (cc && message == MIDI_MSG_MIDI_CC && in_ch == channel) {
-                    uint8_t cc = 1; // Modulation wheel
-                    if (in_fn == MIDI_IN_EXPRESSION) cc = 11;
-                    if (in_fn == MIDI_IN_PAN) cc = 10;
-                    if (in_fn == MIDI_IN_HOLD) cc = 64;
-                    if (in_fn == MIDI_IN_BREATH) cc = 2;
-                    if (in_fn == MIDI_IN_Y_AXIS) cc = 74;
-
+                    uint8_t cc = get_in_cc(ch);
+ 
                     // Send CC wheel to CV
                     if (data1 == cc) {
-                        if (in_fn == MIDI_IN_HOLD && data2 > 0) data2 = 127;
+                        //if (in_fn == MIDI_IN_HOLD && data2 > 0) data2 = 127;
                         Out(ch, Proportion(data2, 127, HSAPPLICATION_5V));
-                        UpdateLog(1, ch, 2, in_ch, data1, data2);
+                        if(ch < 4) {
+                          UpdateLog(1, ch, 2, in_ch, data1, data2);
+                        }
                         indicator = 1;
                     }
                 }
 
-                if (message == MIDI_MSG_AFTERTOUCH && in_fn == MIDI_IN_AFTERTOUCH && in_ch == channel) {
+                if (message == MIDI_MSG_AFTERTOUCH && in_fn == MIDI_IN_AFTERTOUCH && in_ch == channel && (ch < 4)) {
                     // Send aftertouch to CV
                     Out(ch, Proportion(data2, 127, HSAPPLICATION_5V));
                     UpdateLog(1, ch, 3, in_ch, data1, data2);
+                    
                     indicator = 1;
                 }
 
-                if (message == MIDI_MSG_PITCHBEND && in_fn == MIDI_IN_PITCHBEND && in_ch == channel) {
+                if (message == MIDI_MSG_PITCHBEND && in_fn == MIDI_IN_PITCHBEND && in_ch == channel && (ch < 4)) {
                     // Send pitch bend to CV
                     int data = (data2 << 7) + data1 - 8192;
                     Out(ch, Proportion(data, 0x7fff, HSAPPLICATION_3V));
                     UpdateLog(1, ch, 4, in_ch, 0, data);
+                    
                     indicator = 1;
                 }
 
-                if (in_fn >= MIDI_IN_CLOCK_4TH) {
+                if (in_fn >= MIDI_IN_CLOCK_4TH && (ch > 3)) {
                     // Clock is unlogged because there can be a lot of it
                     uint8_t mod = get_clock_mod(in_fn);
                     if (clock_count % mod == 0) ClockOut(ch);
@@ -749,7 +801,9 @@ private:
 
                 #ifdef MIDI_DIAGNOTIC
                 if (message > 0) {
+                  if(ch < 4) {
                     UpdateLog(1, ch, 6, message, data1, data2);
+                  }
                 }
                 #endif
 
@@ -786,6 +840,11 @@ private:
         int range_low = values_[24 + ch + setup_offset];
         int range_high = values_[32 + ch + setup_offset];
         return (note >= range_low && note <= range_high);
+    }
+
+    int get_in_cc(int ch) {
+        int setup_offset = get_setup_number() * MIDI_PARAMETER_COUNT;
+        return values_[70 + ch + setup_offset];
     }
 
     int get_out_assign(int ch) {
