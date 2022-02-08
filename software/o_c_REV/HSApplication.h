@@ -67,7 +67,9 @@ public:
               } else changed_cv[ch] = 0;
             }
             if (clock_countdown[ch] > 0) {
-                if (--clock_countdown[ch] == 0) OC::GateOutputs::Gateout(ch-4, 0);
+                if(ch > 3) {
+                  if (--clock_countdown[ch] == 0) OC::GateOutputs::Gateout(ch-4, 0);
+                }
             }
         }
 
