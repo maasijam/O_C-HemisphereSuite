@@ -442,8 +442,8 @@ private:
     int log_view; // Current index for viewing
 
     // MIDI In
-    int note_in[4]; // Up to four notes at a time are kept track of with MIDI In
-    uint16_t indicator_in[4]; // A MIDI indicator will display next to MIDI In assignment
+    int note_in[10]; // Up to four notes at a time are kept track of with MIDI In
+    uint16_t indicator_in[10]; // A MIDI indicator will display next to MIDI In assignment
     uint8_t clock_count; // MIDI clock counter (24ppqn)
 
     // MIDI Out
@@ -461,6 +461,7 @@ private:
         if (screen == 2) graphics.print("Transpose");
         if (screen == 3) graphics.print("Range Low");
         if (screen == 4) graphics.print("Range High");
+        if (screen == 5) graphics.print("CC Number");
         gfxPrint(128 - 42, 1, "Setup ");
         gfxPrint(get_setup_number() + 1);
 
@@ -472,12 +473,12 @@ private:
             bool suppress = 0; // Don't show the setting if it's not relevant
             const int current = settings_list.Next(list_item);
             const int value = get_value(current);
-            int p = current % 8; // Menu position from 0-7
+            int p = current % 14; // Menu position from 0-13
 
             // MIDI In and Out indicators for all screens
-            if (p < 4) { // It's a MIDI In assignment
+            if (p < 10) { // It's a MIDI In assignment
                 if (indicator_in[p] > 0 || note_in[p] > -1) {
-                    if (get_in_assign(p) == MIDI_IN_NOTE) {
+                    if (get_in_assign(p) == MIDI_IN_NOTE && (p < 4)) {
                         if (note_in[p] > -1) {
                             graphics.setPrintPos(70, list_item.y + 2);
                             graphics.print(midi_note_numbers[note_in[p]]);
@@ -486,19 +487,21 @@ private:
                 }
 
                 // Indicate if the assignment is a note type
-                if (get_in_channel(p) > 0 && get_in_assign(p) == MIDI_IN_NOTE)
+                if (get_in_channel(p) > 0 && get_in_assign(p) == MIDI_IN_NOTE && (p < 4) && screen < 5)
                     graphics.drawBitmap8(56, list_item.y + 1, 8, MIDI_note_icon);
-                else if (screen > 1) suppress = 1;
+                else if (screen > 1 && (get_in_assign(p) != MIDI_IN_CC)) suppress = 1;
+                else if ((screen > 1 && screen < 5) && (get_in_assign(p) == MIDI_IN_CC)) suppress = 1;
+                
 
                 // Indicate if the assignment is a clock
-                if (get_in_assign(p) >= MIDI_IN_CLOCK_4TH) {
+                if (get_in_assign(p) >= MIDI_IN_CLOCK_4TH && (p > 3)) {
                     uint8_t o_x = (clock_count < 12) ? 2 : 0;
                     graphics.drawBitmap8(80 + o_x, list_item.y + 1, 8, MIDI_clock_icon);
                     if (screen > 0) suppress = 1;
                 }
 
             } else { // It's a MIDI Out assignment
-                p -= 4;
+                p -= 10;
                 if (indicator_out[p] > 0 || note_out[p] > -1) {
                     if ((get_out_assign(p) == MIDI_OUT_NOTE || get_out_assign(p) == MIDI_OUT_LEGATO)) {
                         if (note_out[p] > -1) {
