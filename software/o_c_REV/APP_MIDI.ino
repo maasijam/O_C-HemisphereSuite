@@ -41,7 +41,7 @@ const char* const midi_in_functions[6] = {
     "--", "Note", "Veloc", "Aft", "Bend", "CC"
 };
 const char* const midi_in_gate_functions[8] = {
-    "--", "Gate", "Trig", "Hold", "Qtr", "8th", "16th", "24ppq"
+    "--", "Gate", "Trig", "Hold", "4th", "8th", "16th", "24ppq"
 };
 const char* const midi_out_functions[12] = {
     "--", "Note", "Leg.", "Veloc", "Mod", "Aft", "Bend", "Expr", "Pan", "Hold", "Brth", "yAxis"
