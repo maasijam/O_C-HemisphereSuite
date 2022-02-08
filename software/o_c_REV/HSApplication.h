@@ -32,6 +32,7 @@ typedef int32_t simfloat;
 #endif
 
 #include "HSicons.h"
+#include "OC_gate_outputs.h"
 
 #ifndef HSAPPLICATION_H_
 #define HSAPPLICATION_H_
@@ -55,17 +56,18 @@ public:
     virtual void Resume();
 
     void BaseController() {
-        for (uint8_t ch = 0; ch < 4; ch++)
+        for (uint8_t ch = 0; ch < 10; ch++)
         {
             // Set ADC input values
-            inputs[ch] = OC::ADC::raw_pitch_value((ADC_CHANNEL)ch);
-            if (abs(inputs[ch] - last_cv[ch]) > HSAPPLICATION_CHANGE_THRESHOLD) {
-                changed_cv[ch] = 1;
-                last_cv[ch] = inputs[ch];
-            } else changed_cv[ch] = 0;
-
+            if(ch < 4) {
+              inputs[ch] = OC::ADC::raw_pitch_value((ADC_CHANNEL)ch);
+              if (abs(inputs[ch] - last_cv[ch]) > HSAPPLICATION_CHANGE_THRESHOLD) {
+                  changed_cv[ch] = 1;
+                  last_cv[ch] = inputs[ch];
+              } else changed_cv[ch] = 0;
+            }
             if (clock_countdown[ch] > 0) {
-                if (--clock_countdown[ch] == 0) Out(ch, 0);
+                if (--clock_countdown[ch] == 0) OC::GateOutputs::Gateout(ch-4, 0);
             }
         }
 
@@ -77,10 +79,12 @@ public:
 
     void BaseStart() {
         // Initialize some things for startup
-        for (uint8_t ch = 0; ch < 4; ch++)
+        for (uint8_t ch = 0; ch < 10; ch++)
         {
             clock_countdown[ch]  = 0;
-            adc_lag_countdown[ch] = 0;
+            if(ch < 4) {
+              adc_lag_countdown[ch] = 0;
+            }
         }
         cursor_countdown = HSAPPLICATION_CURSOR_TICKS;
 
@@ -146,7 +150,7 @@ public:
 
     void ClockOut(int ch, int ticks = 100) {
         clock_countdown[ch] = ticks;
-        Out(ch, 0, PULSE_VOLTAGE);
+        OC::GateOutputs::Gateout(ch-4, 1);
     }
 
     // Buffered I/O functions for use in Views
@@ -271,7 +275,7 @@ protected:
     }
 
 private:
-    int clock_countdown[4]; // For clock output timing
+    int clock_countdown[10]; // For clock output timing
     int adc_lag_countdown[4]; // Lag countdown for each input channel
     int cursor_countdown; // Timer for cursor blinkin'
     uint32_t last_view_tick; // Time since the last view, for activating screen blanking

@@ -243,9 +243,11 @@ public:
     menu::ScreenCursor<menu::kScreenLines> cursor;
 
     void Start() {
+        // Initialize some things for startup
+     
         screen = 0;
         display = 0;
-        cursor.Init(0, 7);
+        cursor.Init(0, 13);
         log_index = 0;
         log_view = 0;
         Reset();
@@ -253,8 +255,8 @@ public:
         // Go through all the Setups and change the default high ranges to G9
         for (int s = 0; s < 4; s++)
         {
-            for (int p = 0; p < 8; p++)
-                if (values_[s * MIDI_PARAMETER_COUNT + 32 + p] == 0) values_[s * MIDI_PARAMETER_COUNT + 32 + p] = 127;
+            for (int p = 0; p < 14; p++)
+                if (values_[s * MIDI_PARAMETER_COUNT + 56 + p] == 0) values_[s * MIDI_PARAMETER_COUNT + 56 + p] = 127;
         }
 	}
 
@@ -267,10 +269,12 @@ public:
         midi_out();
 
         // Handle clock timing
-        for (int ch = 0; ch < 4; ch++)
+        for (int ch = 0; ch < 10; ch++)
         {
             if (indicator_in[ch] > 0) --indicator_in[ch];
-            if (indicator_out[ch] > 0) --indicator_out[ch];
+            if(ch < 4) {
+              if (indicator_out[ch] > 0) --indicator_out[ch];
+            }
         }
     }
 
@@ -288,9 +292,9 @@ public:
         if (setup_number != get_setup_number()) Reset();
 
         // Find the cursor position, and new start and end menu items
-        int prev_cursor = cursor.cursor_pos() - ((screen * 8) + (get_setup_number() * MIDI_PARAMETER_COUNT));
-        int start = (new_screen * 8) + (setup_number * MIDI_PARAMETER_COUNT);
-        int end = (new_screen * 8) + (setup_number * MIDI_PARAMETER_COUNT) + 7;
+        int prev_cursor = cursor.cursor_pos() - ((screen * 14) + (get_setup_number() * MIDI_PARAMETER_COUNT));
+        int start = (new_screen * 14) + (setup_number * MIDI_PARAMETER_COUNT);
+        int end = (new_screen * 14) + (setup_number * MIDI_PARAMETER_COUNT) + 13;
 
         // And go to there
         cursor.Init(start, end);
@@ -302,7 +306,7 @@ public:
     void SwitchScreenOrLogView(int dir) {
         if (display == 0) {
             // Switch screen
-            int new_screen = constrain(screen + dir, 0, 4);
+            int new_screen = constrain(screen + dir, 0, 5);
             SelectSetup(get_setup_number(), new_screen);
         } else {
             // Scroll Log view
@@ -326,13 +330,20 @@ public:
 
     void Reset() {
         // Reset the interface states
-        for (int ch = 0; ch < 4; ch++)
+        for (int ch = 0; ch < 10; ch++)
         {
+           
             note_in[ch] = -1;
-            note_out[ch] = -1;
             indicator_in[ch] = 0;
-            indicator_out[ch] = 0;
-            Out(ch, 0);
+            if(ch > 3) {
+              OC::GateOutputs::Gateout(ch-4, 0);
+            }
+            if(ch < 4) {
+              note_out[ch] = -1;
+              indicator_out[ch] = 0;
+              Out(ch, 0);
+            }
+            
         }
         clock_count = 0;
     }
@@ -424,9 +435,9 @@ public:
     * below the low range, or that the low range doesn't go above the high range
     */
    void ConstrainRangeValue(int ix) {
-       int page = ix / 8; // Page within a Setup
-       if (page == 4 && values_[ix] < values_[ix - 8]) values_[ix] = values_[ix - 8];
-       if (page == 3 && values_[ix] > values_[ix + 8]) values_[ix] = values_[ix + 8];
+       int page = ix / 14; // Page within a Setup
+       if (page == 4 && values_[ix] < values_[ix - 14]) values_[ix] = values_[ix - 14];
+       if (page == 3 && values_[ix] > values_[ix + 14]) values_[ix] = values_[ix + 14];
    }
 
 private:
@@ -828,20 +839,25 @@ private:
         return values_[ch + setup_offset];
     }
 
+    int get_in_gate_assign(int ch) {
+        int setup_offset = get_setup_number() * MIDI_PARAMETER_COUNT;
+        return values_[4 + ch + setup_offset];
+    }
+
     int get_in_channel(int ch) {
         int setup_offset = get_setup_number() * MIDI_PARAMETER_COUNT;
-        return values_[8 + ch + setup_offset];
+        return values_[14 + ch + setup_offset];
     }
 
     int get_in_transpose(int ch) {
         int setup_offset = get_setup_number() * MIDI_PARAMETER_COUNT;
-        return values_[16 + ch + setup_offset];
+        return values_[28 + ch + setup_offset];
     }
 
     bool in_in_range(int ch, int note) {
         int setup_offset = get_setup_number() * MIDI_PARAMETER_COUNT;
-        int range_low = values_[24 + ch + setup_offset];
-        int range_high = values_[32 + ch + setup_offset];
+        int range_low = values_[42 + ch + setup_offset];
+        int range_high = values_[56 + ch + setup_offset];
         return (note >= range_low && note <= range_high);
     }
 
@@ -852,23 +868,23 @@ private:
 
     int get_out_assign(int ch) {
         int setup_offset = get_setup_number() * MIDI_PARAMETER_COUNT;
-        return values_[4 + ch + setup_offset];
+        return values_[10 + ch + setup_offset];
     }
 
     int get_out_channel(int ch) {
         int setup_offset = get_setup_number() * MIDI_PARAMETER_COUNT;
-        return values_[12 + ch + setup_offset];
+        return values_[24 + ch + setup_offset];
     }
 
     int get_out_transpose(int ch) {
         int setup_offset = get_setup_number() * MIDI_PARAMETER_COUNT;
-        return values_[20 + ch + setup_offset];
+        return values_[38 + ch + setup_offset];
     }
 
     bool in_out_range(int ch, int note) {
         int setup_offset = get_setup_number() * MIDI_PARAMETER_COUNT;
-        int range_low = values_[28 + ch + setup_offset];
-        int range_high = values_[36 + ch + setup_offset];
+        int range_low = values_[52 + ch + setup_offset];
+        int range_high = values_[66 + ch + setup_offset];
         return (note >= range_low && note <= range_high);
     }
 
