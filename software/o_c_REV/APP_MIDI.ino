@@ -778,16 +778,14 @@ private:
                 }
 
                 bool cc = (in_fn == MIDI_IN_CC);
-                if (cc && message == MIDI_MSG_MIDI_CC && in_ch == channel) {
+                if (cc && message == MIDI_MSG_MIDI_CC && in_ch == channel && ch < 4) {
                     uint8_t cc = get_in_cc(ch);
  
                     // Send CC wheel to CV
                     if (data1 == cc) {
                         //if (in_fn == MIDI_IN_HOLD && data2 > 0) data2 = 127;
                         Out(ch, Proportion(data2, 127, HSAPPLICATION_5V));
-                        if(ch < 4) {
-                          UpdateLog(1, ch, 2, in_ch, data1, data2);
-                        }
+                        UpdateLog(1, ch, 2, in_ch, data1, data2);
                         indicator = 1;
                     }
                 }

@@ -108,10 +108,8 @@ public:
     //////////////// Hemisphere-like IO methods
     ////////////////////////////////////////////////////////////////////////////////
     void Out(int ch, int value, int octave = 0) {
-        if(ch < 4) {
-          OC::DAC::set_pitch((DAC_CHANNEL)ch, value, octave);
-          outputs[ch] = value + (octave * (12 << 7));
-        }
+        OC::DAC::set_pitch((DAC_CHANNEL)ch, value, octave);
+        outputs[ch] = value + (octave * (12 << 7));
     }
 
     int In(int ch) {
