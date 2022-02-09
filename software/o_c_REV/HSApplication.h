@@ -69,7 +69,7 @@ public:
             }
             if (clock_countdown[ch] > 0) {
                 if(ch > 3) {
-                  if (--clock_countdown[ch] == 0) RealGateOut(ch, 0);
+                  if (--clock_countdown[ch] == 0) MFX2GateOut(ch, 0);
                 }
             }
         }
@@ -141,7 +141,7 @@ public:
         Out(ch, 0, (high ? PULSE_VOLTAGE : 0));
     }
 
-    void RealGateOut(int ch, bool high, int ch_offset = 4) {
+    void MFX2GateOut(int ch, bool high, int ch_offset = 4) {
         OC::GateOutputs::Gateout(ch-ch_offset,(high ? 1 : 0));
     }
 
@@ -163,10 +163,10 @@ public:
         Out(ch, 0, PULSE_VOLTAGE);
     }
 
-    void RealClockOut(int ch, int ticks = 100) {
+    void MFX2ClockOut(int ch, int ticks = 100) {
         clock_countdown[ch] = ticks;
         if(ch > 3) {
-          RealGateOut(ch, 1);
+          MFX2GateOut(ch, 1);
         }
     }
 
