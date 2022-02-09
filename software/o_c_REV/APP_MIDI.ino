@@ -336,7 +336,7 @@ public:
             note_in[ch] = -1;
             indicator_in[ch] = 0;
             if(ch > 3) {
-              GateOut(ch, 0);
+              RealGateOut(ch, 0);
             }
             if(ch < 4) {
               note_out[ch] = -1;
@@ -740,7 +740,7 @@ private:
 
                         if (in_fn == MIDI_IN_GATE && !gate_captured && (ch > 3)) {
                             // Send a gate at Note On
-                            GateOutput(ch, 1);
+                            RealGateOut(ch, 1);
                             indicator = 1;
                             gate_captured = 1;
                             note_in[ch] = data1;
@@ -748,7 +748,7 @@ private:
 
                         if (in_fn == MIDI_IN_TRIGGER && (ch > 3)) {
                             // Send a trigger pulse to CV
-                            ClockOut(ch);
+                            RealClockOut(ch);
                             indicator = 1;
                             gate_captured = 1;
                         }
@@ -766,7 +766,7 @@ private:
                         note_in[ch] = -1;
                         if (in_fn == MIDI_IN_GATE && (ch > 3)) {
                             // Turn off gate on Note Off
-                            GateOutput(ch,0);
+                            RealGateOut(ch,0);
                             indicator = 1;
                         } else if (in_fn == MIDI_IN_NOTE && (ch < 4)) {
                             // Log Note Off on the note assignment
@@ -812,7 +812,7 @@ private:
                 if (in_fn >= MIDI_IN_CLOCK_4TH && (ch > 3)) {
                     // Clock is unlogged because there can be a lot of it
                     uint8_t mod = get_clock_mod(in_fn);
-                    if (clock_count % mod == 0) ClockOut(ch);
+                    if (clock_count % mod == 0) RealClockOut(ch);
                 }
 
                 #ifdef MIDI_DIAGNOTIC

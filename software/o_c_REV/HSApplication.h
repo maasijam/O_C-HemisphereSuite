@@ -69,7 +69,7 @@ public:
             }
             if (clock_countdown[ch] > 0) {
                 if(ch > 3) {
-                  if (--clock_countdown[ch] == 0) GateOutput(ch, 0);
+                  if (--clock_countdown[ch] == 0) RealGateOut(ch, 0);
                 }
             }
         }
@@ -118,9 +118,6 @@ public:
         return inputs[ch];
     }
 
-    void GateOutput(int ch, bool high, int ch_offset = 4) {
-        OC::GateOutputs::Gateout(ch-ch_offset,(high ? 1 : 0));
-    }
 
     // Apply small center detent to input, so it reads zero before a threshold
     int DetentedIn(int ch) {
@@ -144,6 +141,10 @@ public:
         Out(ch, 0, (high ? PULSE_VOLTAGE : 0));
     }
 
+    void RealGateOut(int ch, bool high, int ch_offset = 4) {
+        OC::GateOutputs::Gateout(ch-ch_offset,(high ? 1 : 0));
+    }
+
     bool Clock(int ch) {
         bool clocked = 0;
         if (ch == 0) clocked = OC::DigitalInputs::clocked<OC::DIGITAL_INPUT_1>();
@@ -159,8 +160,13 @@ public:
 
     void ClockOut(int ch, int ticks = 100) {
         clock_countdown[ch] = ticks;
+        Out(ch, 0, PULSE_VOLTAGE);
+    }
+
+    void RealClockOut(int ch, int ticks = 100) {
+        clock_countdown[ch] = ticks;
         if(ch > 3) {
-          GateOutput(ch, 1);
+          RealGateOut(ch, 1);
         }
     }
 
