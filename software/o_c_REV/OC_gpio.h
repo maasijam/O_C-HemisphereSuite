@@ -42,14 +42,14 @@
 #define DAC_RST 9
 #define DAC_CS 10
 
-#define GATE_1 26
-#define GATE_2 27
-#define GATE_3 28
-#define GATE_4 29
-#define GATE_5 30
-#define GATE_6 31
+#define GATE_1 25
+#define GATE_2 26
+#define GATE_3 27
+#define GATE_4 28
+#define GATE_5 29
+#define GATE_6 30
 
-#define CLKIN 25
+#define CLKIN 31
 
 // NOTE: encoder pins R1/R2 changed for rev >= 2c
 #ifdef FLIP_180
